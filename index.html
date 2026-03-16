@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>직장인 크리에이터 21일 챌린지</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF6B35',
+            'primary-light': '#FFF3EE',
+            'primary-dark': '#E55A25',
+            accent: '#FFD166',
+            dark: '#1A1A1A',
+          },
+          fontFamily: {
+            sans: ['Noto Sans KR', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      font-family: 'Noto Sans KR', sans-serif;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0C0C0C;
+      color: #FFFFFF;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Button States */
+    .btn-primary {
+      background-color: #FF6B35;
+      color: white;
+      padding: 18px 48px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 18px;
+      transition: background-color 0.15s ease, transform 0.15s ease;
+      display: inline-block;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      letter-spacing: -0.3px;
+    }
+    .btn-primary:hover {
+      background-color: #E55A25;
+      transform: scale(1.02);
+    }
+    .btn-primary:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.35);
+    }
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: #FF6B35;
+      padding: 14px 32px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 16px;
+      border: 2px solid #FF6B35;
+      transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+      display: inline-block;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-secondary:hover {
+      background-color: #FFF3EE;
+      transform: scale(1.02);
+    }
+    .btn-secondary:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.25);
+    }
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    /* Badge */
+    .badge {
+      background: #FFD166;
+      color: #1A1A1A;
+      padding: 6px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    .badge-outline {
+      border: 1.5px solid #FF6B35;
+      color: #FF6B35;
+      padding: 4px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    /* Card */
+    .card {
+      background: #1A1A1A;
+      border-radius: 16px;
+      border: 1px solid #2A2A2A;
+      padding: 24px;
+    }
+
+    .card-highlight {
+      background: #1A1A1A;
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    /* Shadow with color tint */
+    .shadow-colored {
+      box-shadow: 0 8px 32px rgba(255, 107, 53, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .shadow-soft {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    /* FAQ accordion */
+    details summary {
+      cursor: pointer;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+    .chevron {
+      transition: transform 0.25s ease;
+      color: #FF6B35;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    details[open] .chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Progress bar */
+    .spots-bar {
+      background: #2A2A2A;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .spots-filled {
+      background: linear-gradient(90deg, #FF6B35, #FF9A6C);
+      height: 100%;
+      border-radius: 4px;
+      width: 73%;
+    }
+
+    /* Section label */
+    .section-label {
+      color: #FF6B35;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    /* Divider */
+    .divider {
+      width: 48px;
+      height: 3px;
+      background: #FF6B35;
+      border-radius: 2px;
+      margin: 0 auto 32px;
+    }
+
+    /* Week tag */
+    .week-tag {
+      padding: 4px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    /* Sticky header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(12,12,12,0.96);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid #222222;
+    }
+
+    /* Responsive container */
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .container-narrow {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Check list */
+    .check-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .check-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 15px;
+      color: rgba(255,255,255,0.75);
+    }
+    .check-list li::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      background: #FF6B35;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath d='M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z'/%3E%3C/svg%3E");
+      background-size: 11px;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin-top: 2px;
+    }
+
+    /* Fade in animation */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─────────────────────────────────────────────
+     HEADER
+───────────────────────────────────────────── -->
+<header>
+  <div class="container" style="display:flex; align-items:center; justify-content:space-between; height:64px;">
+    <!-- Logo -->
+    <div>
+      <img
+        src="./brand_logo/더브릿지로고_가로형-04.png"
+        alt="브랜드 로고"
+        style="height:32px; object-fit:contain; filter:brightness(0) invert(1);"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+      >
+      <span style="display:none; font-weight:800; font-size:18px; color:#FF6B35;">직장인 크리에이터</span>
+    </div>
+    <!-- Sticky CTA -->
+    <a href="#" class="btn-primary" style="padding:10px 22px; font-size:13px; border-radius:10px;">신청하기 →</a>
+  </div>
+</header>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 1: HERO
+───────────────────────────────────────────── -->
+<section style="padding: 72px 24px 64px; text-align:center; background:#0C0C0C;">
+  <div class="container">
+
+    <!-- Badge -->
+    <div style="margin-bottom:24px;">
+      <span class="badge">🔥 선착순 30명 한정</span>
+    </div>
+
+    <!-- Headline -->
+    <h1 style="font-size:clamp(34px, 6.5vw, 56px); font-weight:900; line-height:1.2; color:#FFFFFF; margin-bottom:20px; letter-spacing:-1.5px; word-break:keep-all;">
+      월급 외 <span style="color:#FF6B35;">첫 수입</span>,<br>21일 만에 만들어드립니다
+    </h1>
+
+    <!-- Sub headline -->
+    <p style="font-size:clamp(16px, 2.5vw, 19px); color:rgba(255,255,255,0.55); line-height:1.8; margin-bottom:40px; word-break:keep-all;">
+      직장 다니면서 콘텐츠 크리에이터로 수익 파이프라인 만들기<br>
+      <strong style="color:rgba(255,255,255,0.9);">하루 1시간, 21일이면 충분합니다</strong>
+    </p>
+
+    <!-- Primary CTA -->
+    <div style="margin-bottom:16px;">
+      <a href="#" class="btn-primary" style="font-size:19px; padding:20px 56px;">
+        지금 바로 신청하기 →
+      </a>
+    </div>
+
+    <!-- Price + guarantee line -->
+    <p style="font-size:14px; color:rgba(255,255,255,0.35); margin-bottom:40px;">
+      97,000원 &nbsp;·&nbsp; 7일 무조건 환불 보장
+    </p>
+
+    <!-- Spots bar -->
+    <div style="background:#1A1A1A; border:1px solid #2A2A2A; border-radius:14px; padding:18px 24px; display:inline-block; min-width:280px;">
+      <p style="font-size:13px; color:#FF6B35; font-weight:700; margin-bottom:8px; text-align:left;">⚡ 잔여 자리 현황</p>
+      <div class="spots-bar">
+        <div class="spots-filled"></div>
+      </div>
+      <p style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:6px; text-align:left;">30명 중 22명 신청 완료 · 잔여 <strong style="color:#FF6B35;">8자리</strong></p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 2: PAIN POINTS
+───────────────────────────────────────────── -->
+<section style="padding:80px 24px; background:#F9F9F9;">
+  <div class="container">
+
+    <div style="text-align:center; margin-bottom:48px;">
+      <span class="section-label">혹시 이런 생각 해보셨나요?</span>
+      <div class="divider"></div>
+      <h2 style="font-size:clamp(24px, 4vw, 36px); font-weight:800; color:#1A1A1A; line-height:1.4; word-break:keep-all;">
+        "월급만으로는 부족한데,<br>뭐부터 시작해야 할지 모르겠다"
+      </h2>
+    </div>
+
+    <div style="display:grid; gap:14px;">
+
+      <div class="card shadow-soft" style="display:flex; gap:16px; align-items:flex-start;">
+        <span style="font-size:26px; flex-shrink:0; margin-top:2px;">😮‍💨</span>
+        <div>
+          <p style="font-weight:700; font-size:15px; color:#1A1A1A; margin-bottom:5px;">"퇴근하면 지쳐서 아무것도 못하겠어요"</p>
+          <p style="color:#777777; font-size:13px; line-height:1.7;">그래도 통장은 항상 그 자리. 뭔가 바꾸고 싶은데 시간도 에너지도 없다.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-soft" style="display:flex; gap:16px; align-items:flex-start;">
+        <span style="font-size:26px; flex-shrink:0; margin-top:2px;">😶</span>
+        <div>
+          <p style="font-weight:700; font-size:15px; color:#1A1A1A; margin-bottom:5px;">"크리에이터? 저는 특별한 재능이 없는데요"</p>
+          <p style="color:#777777; font-size:13px; line-height:1.7;">유명 크리에이터처럼 재밌지도, 전문가도 아니라는 생각에 시작조차 못 한다.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-soft" style="display:flex; gap:16px; align-items:flex-start;">
+        <span style="font-size:26px; flex-shrink:0; margin-top:2px;">🤯</span>
+        <div>
+          <p style="font-weight:700; font-size:15px; color:#1A1A1A; margin-bottom:5px;">"N잡, 부업 찾아봤는데 뭐가 맞는지 모르겠어요"</p>
+          <p style="color:#777777; font-size:13px; line-height:1.7;">정보는 넘쳐나는데 오히려 뭘 해야 할지 더 헷갈리기만 한다.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-soft" style="display:flex; gap:16px; align-items:flex-start;">
+        <span style="font-size:26px; flex-shrink:0; margin-top:2px;">😔</span>
+        <div>
+          <p style="font-weight:700; font-size:15px; color:#1A1A1A; margin-bottom:5px;">"시작했다가 중간에 포기할까봐 두려워요"</p>
+          <p style="color:#777777; font-size:13px; line-height:1.7;">혼자 하려니 막막하고, 작심삼일로 끝날 것 같아서 시작이 망설여진다.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 3: SOLUTION
+───────────────────────────────────────────── -->
+<section style="padding:80px 24px; background:white;">
+  <div class="container" style="text-align:center;">
+
+    <span class="section-label">해결책</span>
+    <div class="divider"></div>
+    <h2 style="font-size:clamp(24px, 4vw, 38px); font-weight:800; color:#1A1A1A; margin-bottom:20px; line-height:1.35; word-break:keep-all;">
+      크리에이터 수익은 재능이 아니라<br><span style="color:#FF6B35;">방법</span>의 문제입니다
+    </h2>
+    <p style="font-size:16px; color:#555555; line-height:1.9; max-width:520px; margin:0 auto 56px; word-break:keep-all;">
+      직장인이 콘텐츠로 수익을 내지 못하는 이유는<br>재능이 없어서가 아니에요.<br>
+      <strong style="color:#1A1A1A;">올바른 순서와 실전 방법을 모르기 때문입니다.</strong><br><br>
+      21일 챌린지는 매일 하나씩, 직장인의 일정에 맞춰<br>실제로 수익이 생기는 크리에이터 구조를 만들어드립니다.
+    </p>
+
+    <!-- 3 pillars -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
+      <div class="card-highlight" style="text-align:center; padding:32px 20px;">
+        <div style="font-size:36px; margin-bottom:14px;">⏰</div>
+        <p style="font-weight:800; font-size:16px; margin-bottom:8px; color:#1A1A1A;">하루 1시간</p>
+        <p style="font-size:13px; color:#666666; line-height:1.6;">직장과 병행 가능한<br>현실적인 커리큘럼</p>
+      </div>
+      <div class="card-highlight" style="text-align:center; padding:32px 20px;">
+        <div style="font-size:36px; margin-bottom:14px;">🎯</div>
+        <p style="font-weight:800; font-size:16px; margin-bottom:8px; color:#1A1A1A;">매일 실전 미션</p>
+        <p style="font-size:13px; color:#666666; line-height:1.6;">이론 없이 바로 실행하는<br>액션 중심 챌린지</p>
+      </div>
+      <div class="card-highlight" style="text-align:center; padding:32px 20px;">
+        <div style="font-size:36px; margin-bottom:14px;">💰</div>
+        <p style="font-weight:800; font-size:16px; margin-bottom:8px; color:#1A1A1A;">수익 구조 설계</p>
+        <p style="font-size:13px; color:#666666; line-height:1.6;">21일 안에 수익 파이프라인<br>직접 완성</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 4: CURRICULUM
+───────────────────────────────────────────── -->
+<section style="padding:80px 24px; background:#F9F9F9;">
+  <div class="container">
+
+    <div style="text-align:center; margin-bottom:48px;">
+      <span class="section-label">커리큘럼</span>
+      <div class="divider"></div>
+      <h2 style="font-size:clamp(24px, 4vw, 36px); font-weight:800; color:#1A1A1A; line-height:1.4; word-break:keep-all;">
+        21일 동안 이렇게 진행됩니다
+      </h2>
+    </div>
+
+    <div style="display:grid; gap:16px;">
+
+      <!-- Week 1 -->
+      <div class="card shadow-colored" style="border-left:4px solid #FF6B35;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+          <span class="week-tag" style="background:#FF6B35; color:white;">WEEK 1</span>
+          <span style="font-weight:800; font-size:17px; color:#1A1A1A;">Day 1–7 &nbsp;·&nbsp; 포지셔닝 &amp; 채널 설정</span>
+        </div>
+        <ul class="check-list">
+          <li>나만의 크리에이터 포지셔닝 찾기</li>
+          <li>수익화에 유리한 채널·플랫폼 선택</li>
+          <li>첫 콘텐츠 방향 설계 &amp; 채널 개설</li>
+        </ul>
+      </div>
+
+      <!-- Week 2 -->
+      <div class="card shadow-soft" style="border-left:4px solid #FFD166;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+          <span class="week-tag" style="background:#FFD166; color:#1A1A1A;">WEEK 2</span>
+          <span style="font-weight:800; font-size:17px; color:#1A1A1A;">Day 8–14 &nbsp;·&nbsp; 콘텐츠 제작 실전</span>
+        </div>
+        <ul class="check-list">
+          <li>클릭받는 콘텐츠 기획법</li>
+          <li>직장인도 할 수 있는 빠른 제작 루틴</li>
+          <li>첫 콘텐츠 3개 업로드 완료</li>
+        </ul>
+      </div>
+
+      <!-- Week 3 -->
+      <div class="card shadow-soft" style="border-left:4px solid #4ECDC4;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+          <span class="week-tag" style="background:#4ECDC4; color:white;">WEEK 3</span>
+          <span style="font-weight:800; font-size:17px; color:#1A1A1A;">Day 15–21 &nbsp;·&nbsp; 수익화 구조 설계</span>
+        </div>
+        <ul class="check-list">
+          <li>크리에이터 수익 모델 3가지 적용</li>
+          <li>수익 파이프라인 완성 &amp; 자동화</li>
+          <li>첫 수익 창출 목표 달성</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 5: OFFER / PRICE BOX
+───────────────────────────────────────────── -->
+<section style="padding:80px 24px; background:white;">
+  <div class="container-narrow">
+
+    <div style="text-align:center; margin-bottom:40px;">
+      <span class="section-label">지금 신청하면</span>
+      <div class="divider"></div>
+      <h2 style="font-size:clamp(24px, 4vw, 34px); font-weight:800; color:#1A1A1A; line-height:1.4; word-break:keep-all;">
+        이 모든 것을 가져가실 수 있어요
+      </h2>
+    </div>
+
+    <!-- Dark offer box -->
+    <div style="background:#1A1A1A; border-radius:24px; padding:40px 36px; color:white; text-align:center; margin-bottom:20px;">
+      <p style="color:#888888; font-size:13px; margin-bottom:4px;">콘텐츠 크리에이터 수익화 완성 프로그램</p>
+      <h3 style="font-size:22px; font-weight:900; margin-bottom:32px; line-height:1.3;">직장인 크리에이터 21일 챌린지</h3>
+
+      <div style="text-align:left; margin-bottom:32px; display:grid; gap:14px;">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <span style="color:#FF6B35; font-size:18px; flex-shrink:0; margin-top:1px;">✓</span>
+          <span style="font-size:15px; line-height:1.5;">21일 매일 실전 미션 &amp; 단계별 커리큘럼</span>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <span style="color:#FF6B35; font-size:18px; flex-shrink:0; margin-top:1px;">✓</span>
+          <span style="font-size:15px; line-height:1.5;">직장인 맞춤 시간 관리 &amp; 실행 전략</span>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <span style="color:#FF6B35; font-size:18px; flex-shrink:0; margin-top:1px;">✓</span>
+          <span style="font-size:15px; line-height:1.5;">크리에이터 수익 파이프라인 설계</span>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <span style="color:#FF6B35; font-size:18px; flex-shrink:0; margin-top:1px;">✓</span>
+          <span style="font-size:15px; line-height:1.5;">7일 무조건 환불 보장</span>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #2E2E2E; padding-top:28px;">
+        <p style="color:#888888; font-size:13px; margin-bottom:6px;">선착순 30명 한정 특가</p>
+        <p style="font-size:44px; font-weight:900; color:#FF6B35; line-height:1; margin-bottom:4px;">97,000원</p>
+        <p style="color:#666666; font-size:13px; margin-bottom:28px;">세금 포함 · 1회 결제</p>
+
+        <a href="#" class="btn-primary" style="display:block; width:100%; text-align:center; font-size:18px; padding:18px;">
+          지금 바로 신청하기 →
+        </a>
+        <p style="color:#555555; font-size:12px; margin-top:12px;">🔒 안전한 결제 · 7일 이내 무조건 환불</p>
+      </div>
+    </div>
+
+    <!-- Spots counter -->
+    <div style="background:#FFF3EE; border-radius:14px; padding:18px 22px; text-align:center;">
+      <p style="font-size:14px; color:#FF6B35; font-weight:700; margin-bottom:8px;">⚡ 잔여 자리: <span style="font-size:22px; font-weight:900;">8자리</span> / 30명</p>
+      <div class="spots-bar">
+        <div class="spots-filled"></div>
+      </div>
+      <p style="font-size:12px; color:#999999; margin-top:8px;">서두르지 않으면 마감될 수 있어요</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 6: GUARANTEE
+───────────────────────────────────────────── -->
+<section style="padding:64px 24px; background:#F9F9F9;">
+  <div class="container-narrow">
+    <div style="background:white; border-radius:20px; padding:44px 36px; border:2px solid #FF6B35; text-align:center; box-shadow: 0 8px 40px rgba(255,107,53,0.1);">
+      <div style="font-size:52px; margin-bottom:16px;">🛡️</div>
+      <h3 style="font-size:24px; font-weight:900; color:#1A1A1A; margin-bottom:16px;">7일 무조건 환불 보장</h3>
+      <p style="color:#555555; font-size:15px; line-height:1.9; word-break:keep-all;">
+        챌린지 시작 후 <strong style="color:#1A1A1A;">7일 이내라면 이유 불문하고<br>100% 전액 환불</strong>해드립니다.<br><br>
+        마음에 안 들어도, 생각이 바뀌어도,<br>묻지도 따지지도 않고 바로 환불해드려요.<br>
+        그만큼 자신 있습니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 7: FAQ
+───────────────────────────────────────────── -->
+<section style="padding:80px 24px; background:white;">
+  <div class="container">
+
+    <div style="text-align:center; margin-bottom:48px;">
+      <span class="section-label">FAQ</span>
+      <div class="divider"></div>
+      <h2 style="font-size:clamp(24px, 4vw, 34px); font-weight:800; color:#1A1A1A;">자주 묻는 질문</h2>
+    </div>
+
+    <div style="display:grid; gap:12px;">
+
+      <details class="card shadow-soft">
+        <summary style="display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:15px; color:#1A1A1A; padding:4px 0;">
+          <span>크리에이터 경험이 전혀 없어도 되나요?</span>
+          <span class="chevron">↓</span>
+        </summary>
+        <p style="color:#555555; font-size:14px; line-height:1.8; margin-top:16px; padding-top:16px; border-top:1px solid #F0F0F0; word-break:keep-all;">
+          네, 전혀 문제없어요! 이 챌린지는 크리에이터 경험이 0인 직장인을 위해 설계됐습니다. 채널 개설부터 첫 콘텐츠 업로드까지, 매일 하나씩 단계별로 안내드립니다.
+        </p>
+      </details>
+
+      <details class="card shadow-soft">
+        <summary style="display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:15px; color:#1A1A1A; padding:4px 0;">
+          <span>직장 다니면서 병행할 수 있나요?</span>
+          <span class="chevron">↓</span>
+        </summary>
+        <p style="color:#555555; font-size:14px; line-height:1.8; margin-top:16px; padding-top:16px; border-top:1px solid #F0F0F0; word-break:keep-all;">
+          이 챌린지는 하루 1시간을 기준으로 설계됐습니다. 점심시간이나 퇴근 후 짧은 시간에 할 수 있는 미션으로 구성되어 있어 직장과 병행하기 충분합니다.
+        </p>
+      </details>
+
+      <details class="card shadow-soft">
+        <summary style="display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:15px; color:#1A1A1A; padding:4px 0;">
+          <span>어떤 플랫폼을 다루나요?</span>
+          <span class="chevron">↓</span>
+        </summary>
+        <p style="color:#555555; font-size:14px; line-height:1.8; margin-top:16px; padding-top:16px; border-top:1px solid #F0F0F0; word-break:keep-all;">
+          유튜브, 인스타그램, 블로그 등 수익화에 유리한 플랫폼을 중심으로 다룹니다. 챌린지 초반에 나의 상황에 맞는 최적의 플랫폼을 선택하는 방법도 함께 알려드립니다.
+        </p>
+      </details>
+
+      <details class="card shadow-soft">
+        <summary style="display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:15px; color:#1A1A1A; padding:4px 0;">
+          <span>21일 안에 실제 수입이 생기나요?</span>
+          <span class="chevron">↓</span>
+        </summary>
+        <p style="color:#555555; font-size:14px; line-height:1.8; margin-top:16px; padding-top:16px; border-top:1px solid #F0F0F0; word-break:keep-all;">
+          21일은 수익 구조를 완성하는 기간입니다. 실행 정도에 따라 다르지만, 챌린지 완료 후 수익이 생기는 파이프라인이 설계되어 있어 실제 수입으로 이어질 수 있어요. 일부 참가자는 챌린지 중에 첫 수익을 경험하기도 합니다.
+        </p>
+      </details>
+
+      <details class="card shadow-soft">
+        <summary style="display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:15px; color:#1A1A1A; padding:4px 0;">
+          <span>챌린지는 어떻게 진행되나요?</span>
+          <span class="chevron">↓</span>
+        </summary>
+        <p style="color:#555555; font-size:14px; line-height:1.8; margin-top:16px; padding-top:16px; border-top:1px solid #F0F0F0; word-break:keep-all;">
+          결제 완료 후 챌린지 시작 날짜와 참여 방법을 안내드립니다. 매일 당일 미션이 제공되며, 온라인으로 언제 어디서든 참여할 수 있습니다.
+        </p>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 8: CONSULTATION FORM
+───────────────────────────────────────────── -->
+<section id="consultation-form" style="padding:80px 24px; background:#111111;">
+  <div class="container-narrow">
+
+    <div style="text-align:center; margin-bottom:40px;">
+      <span class="section-label">대기 신청</span>
+      <div class="divider"></div>
+      <h2 style="font-size:clamp(24px, 4vw, 34px); font-weight:800; color:#FFFFFF; line-height:1.4; word-break:keep-all;">
+        먼저 자리를 확보하세요
+      </h2>
+      <p style="font-size:14px; color:rgba(255,255,255,0.4); margin-top:12px;">신청 후 코치가 일정 확인하여 개별 연락드립니다</p>
+    </div>
+
+    <!-- Form -->
+    <form id="signupForm" style="display:grid; gap:14px;">
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:rgba(255,255,255,0.5); margin-bottom:8px; letter-spacing:1px;">이름 *</label>
+        <input
+          type="text"
+          name="name"
+          placeholder="홍길동"
+          required
+          style="width:100%; padding:14px 16px; background:#1A1A1A; border:1px solid #2A2A2A; border-radius:8px; color:#FFFFFF; font-size:15px; outline:none; transition:border-color 0.15s;"
+          onfocus="this.style.borderColor='#FF6B35'"
+          onblur="this.style.borderColor='#2A2A2A'"
+        >
+      </div>
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:rgba(255,255,255,0.5); margin-bottom:8px; letter-spacing:1px;">이메일 *</label>
+        <input
+          type="email"
+          name="email"
+          placeholder="hello@email.com"
+          required
+          style="width:100%; padding:14px 16px; background:#1A1A1A; border:1px solid #2A2A2A; border-radius:8px; color:#FFFFFF; font-size:15px; outline:none; transition:border-color 0.15s;"
+          onfocus="this.style.borderColor='#FF6B35'"
+          onblur="this.style.borderColor='#2A2A2A'"
+        >
+      </div>
+      <button
+        type="submit"
+        id="submitBtn"
+        class="btn-primary"
+        style="width:100%; text-align:center; font-size:16px; padding:18px; border-radius:10px; margin-top:4px;"
+      >
+        신청하기 →
+      </button>
+    </form>
+
+    <!-- Success message (hidden) -->
+    <div id="successMsg" style="display:none; text-align:center; padding:32px; background:#1A1A1A; border:1px solid #2A2A2A; border-radius:12px; margin-top:16px;">
+      <div style="font-size:40px; margin-bottom:12px;">✅</div>
+      <p style="font-size:16px; font-weight:700; color:#FFFFFF; margin-bottom:8px;">신청이 완료되었습니다.</p>
+      <p style="font-size:14px; color:rgba(255,255,255,0.5); line-height:1.7;">코치가 공열 확인 후 연락드리겠습니다.</p>
+    </div>
+
+    <!-- Error message (hidden) -->
+    <div id="errorMsg" style="display:none; text-align:center; padding:16px; background:#2A1A1A; border:1px solid #FF4444; border-radius:8px; margin-top:12px;">
+      <p style="font-size:14px; color:#FF6666;">오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     SECTION 9: FINAL CTA
+───────────────────────────────────────────── -->
+<section style="padding:88px 24px; background:#1A1A1A; text-align:center; color:white;">
+  <div class="container-narrow">
+
+    <span class="badge" style="margin-bottom:28px; display:inline-block;">🔥 선착순 마감 임박 · 잔여 8자리</span>
+
+    <h2 style="font-size:clamp(28px, 5vw, 46px); font-weight:900; line-height:1.3; margin-bottom:16px; word-break:keep-all;">
+      지금 시작하지 않으면<br>6개월 후도 똑같습니다
+    </h2>
+
+    <p style="color:#AAAAAA; font-size:16px; margin-bottom:44px; line-height:1.8; word-break:keep-all;">
+      월급 외 수입 파이프라인, 21일이면 시작할 수 있어요.<br>
+      오늘의 결정이 6개월 후를 만듭니다.
+    </p>
+
+    <a href="#" class="btn-primary" style="font-size:20px; padding:22px 60px; display:inline-block; margin-bottom:18px;">
+      지금 바로 신청하기 →
+    </a>
+
+    <p style="color:#666666; font-size:13px;">97,000원 &nbsp;·&nbsp; 선착순 30명 한정 &nbsp;·&nbsp; 7일 환불 보장</p>
+
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     P.S.
+───────────────────────────────────────────── -->
+<section style="padding:40px 24px; background:#F9F9F9; text-align:center;">
+  <div class="container-narrow">
+    <p style="font-size:15px; color:#555555; line-height:2; word-break:keep-all;">
+      <strong style="color:#1A1A1A;">P.S.</strong> 이 챌린지는 "언젠가 해야지"를 "오늘 시작"으로 바꾸는 21일입니다.<br>
+      선착순 30명 마감 후에는 재모집 일정이 없습니다.<br>
+      오늘이 가장 빠른 날입니다.
+    </p>
+  </div>
+</section>
+
+
+<!-- ─────────────────────────────────────────────
+     FOOTER
+───────────────────────────────────────────── -->
+<footer style="padding:28px 24px; background:#111111; text-align:center;">
+  <p style="color:#444444; font-size:12px;">© 2026 직장인 크리에이터 21일 챌린지. All rights reserved.</p>
+</footer>
+
+
+<!-- FAQ Accordion Script -->
+<script>
+  document.querySelectorAll('details').forEach(detail => {
+    detail.addEventListener('toggle', () => {
+      const chevron = detail.querySelector('.chevron');
+      if (chevron) {
+        chevron.style.transform = detail.open ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    });
+  });
+</script>
+
+<!-- Supabase Form Script -->
+<script>
+  const { createClient } = supabase;
+  const _supabase = createClient(
+    'https://zwvsoqurymotwngwtngp.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3dnNvcXVyeW1vdHduZ3d0bmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MzUzOTQsImV4cCI6MjA4OTIxMTM5NH0.KZm3nM6dX2aOxmSaCmSekBKnHewKWJpiYoBdKGmVK8o'
+  );
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const form = document.getElementById('signupForm');
+    const successMsg = document.getElementById('successMsg');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // 버튼 로딩 상태
+    btn.disabled = true;
+    btn.textContent = '처리 중...';
+    errorMsg.style.display = 'none';
+
+    const name  = form.name.value.trim();
+    const email = form.email.value.trim();
+
+    const { error } = await _supabase
+      .from('waitlist')
+      .insert([{ name, email }]);
+
+    if (error) {
+      errorMsg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '신청하기 →';
+      return;
+    }
+
+    // 성공
+    form.style.display = 'none';
+    successMsg.style.display = 'block';
+  });
+</script>
+
+</body>
+</html>
