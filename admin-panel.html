@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 패널</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'Noto Sans KR', sans-serif;
+      background: #0C0C0C;
+      color: #FFFFFF;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LOGIN ── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-box {
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-box h1 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .login-box p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 32px;
+    }
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      background: #111111;
+      border: 1px solid #2A2A2A;
+      border-radius: 8px;
+      color: #FFFFFF;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+    .input-field:focus { border-color: #FF6B35; }
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: #FF6B35;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.12s;
+    }
+    .btn-login:hover { background: #E55A25; }
+    .btn-login:active { transform: scale(0.98); }
+    .login-error {
+      color: #FF6666;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* ── DASHBOARD ── */
+    #dashboard { display: none; }
+
+    nav {
+      background: #111111;
+      border-bottom: 1px solid #222222;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: white;
+    }
+    .nav-title span { color: #FF6B35; }
+    .btn-logout {
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid #2A2A2A;
+      border-radius: 6px;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-logout:hover { border-color: #FF6B35; color: #FF6B35; }
+
+    .main { padding: 32px; max-width: 1000px; margin: 0 auto; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: 900;
+      color: white;
+      line-height: 1;
+    }
+    .stat-value.orange { color: #FF6B35; }
+
+    /* Table section */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .btn-refresh {
+      padding: 8px 18px;
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 6px;
+      color: rgba(255,255,255,0.6);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-refresh:hover { border-color: #FF6B35; color: #FF6B35; }
+
+    .table-wrap {
+      background: #1A1A1A;
+      border: 1px solid #2A2A2A;
+      border-radius: 12px;
+      overflow: hidden;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 500px;
+    }
+    thead tr {
+      background: #111111;
+      border-bottom: 1px solid #2A2A2A;
+    }
+    th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+    }
+    tbody tr {
+      border-bottom: 1px solid #222222;
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #222222; }
+    td {
+      padding: 16px 20px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+    }
+    td.name { font-weight: 700; color: white; }
+    td.date { color: rgba(255,255,255,0.4); font-size: 13px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: rgba(255,255,255,0.3);
+    }
+    .empty-state p { font-size: 14px; margin-top: 8px; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: rgba(255,255,255,0.3);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:32px; margin-bottom:16px;">🔒</div>
+    <h1>관리자 로그인</h1>
+    <p>직장인 크리에이터 21일 챌린지</p>
+    <input
+      type="password"
+      id="passwordInput"
+      class="input-field"
+      placeholder="비밀번호 입력"
+      onkeydown="if(event.key==='Enter') login()"
+    >
+    <button class="btn-login" onclick="login()">로그인</button>
+    <p class="login-error" id="loginError">비밀번호가 올바르지 않습니다</p>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+  <nav>
+    <p class="nav-title">관리자 패널 <span>·</span> 신청자 관리</p>
+    <button class="btn-logout" onclick="logout()">로그아웃</button>
+  </nav>
+
+  <div class="main">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="stat-label">전체 신청</p>
+        <p class="stat-value orange" id="statTotal">-</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">오늘 신청</p>
+        <p class="stat-value" id="statToday">-</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">잔여 자리</p>
+        <p class="stat-value" id="statRemain">-</p>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="section-header">
+      <p class="section-title">신청자 목록</p>
+      <button class="btn-refresh" onclick="loadData()">↻ 새로고침</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="loading" id="loadingState">불러오는 중...</div>
+      <table id="dataTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>이름</th>
+            <th>이메일</th>
+            <th>신청일</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div style="font-size:32px;">📭</div>
+        <p>아직 신청자가 없습니다</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── 비밀번호 설정 (변경 시 이 값만 수정) ──
+  const ADMIN_PASSWORD = 'admin1234';
+
+  // ── Supabase ──
+  const { createClient } = supabase;
+  const _supabase = createClient(
+    'https://zwvsoqurymotwngwtngp.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3dnNvcXVyeW1vdHduZ3d0bmdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MzUzOTQsImV4cCI6MjA4OTIxMTM5NH0.KZm3nM6dX2aOxmSaCmSekBKnHewKWJpiYoBdKGmVK8o'
+  );
+
+  // ── 로그인 상태 확인 ──
+  if (sessionStorage.getItem('admin_auth') === 'true') showDashboard();
+
+  function login() {
+    const pw = document.getElementById('passwordInput').value;
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem('admin_auth', 'true');
+      showDashboard();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('admin_auth');
+    location.reload();
+  }
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  }
+
+  async function loadData() {
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('dataTable').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'none';
+
+    const { data, error } = await _supabase
+      .from('waitlist')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    document.getElementById('loadingState').style.display = 'none';
+
+    if (error || !data) return;
+
+    // 통계
+    const total = data.length;
+    const today = data.filter(r => {
+      const d = new Date(r.created_at);
+      const now = new Date();
+      return d.toDateString() === now.toDateString();
+    }).length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statToday').textContent = today;
+    document.getElementById('statRemain').textContent = Math.max(0, 30 - total);
+
+    if (total === 0) {
+      document.getElementById('emptyState').style.display = 'block';
+      return;
+    }
+
+    // 테이블 렌더링
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = data.map((row, i) => {
+      const date = new Date(row.created_at);
+      const formatted = `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+      return `
+        <tr>
+          <td style="color:rgba(255,255,255,0.3); font-size:13px;">${total - i}</td>
+          <td class="name">${escapeHtml(row.name)}</td>
+          <td>${escapeHtml(row.email)}</td>
+          <td class="date">${formatted}</td>
+        </tr>
+      `;
+    }).join('');
+
+    document.getElementById('dataTable').style.display = 'table';
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+
+</body>
+</html>
